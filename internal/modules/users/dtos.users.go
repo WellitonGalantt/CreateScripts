@@ -13,3 +13,10 @@ type RegisterUserDTO struct {
 	Passord          string `json:"password"`
 	Confirm_password string `json:"confirm_password"`
 }
+
+type UpdateUserDTO struct {
+	Name             string `json:"name"`
+	Email            string `json:"email"`
+	Passord          string `json:"password"`
+	Confirm_password string `json:"confirm_password"`
+}
