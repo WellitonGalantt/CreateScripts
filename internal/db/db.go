@@ -11,9 +11,12 @@ import (
 	config "scriptmake/internal/Config"
 	"strconv"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
-//Configuracao da conexao com o banco de dados
+// Configuracao da conexao com o banco de dados
+// go get github.com/lib/pq
 
 // retorna um pool de conexao do banco
 func NewPostgresDB(cfg *config.Config) (*sql.DB, error) {

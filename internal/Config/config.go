@@ -18,6 +18,7 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 	JWTSecret  string
+	ServerPort string
 }
 
 func Load() *Config {
@@ -30,6 +31,7 @@ func Load() *Config {
 		DBPort:     getEnv("DB_PORT", "5432"),
 		DBUser:     getEnv("DB_USER", "postgres"),
 		DBPassword: getEnv("DB_PASSWORD", "0"),
+		ServerPort: getEnv("SERVER_PORT", "8000"),
 	}
 
 	return cfg
