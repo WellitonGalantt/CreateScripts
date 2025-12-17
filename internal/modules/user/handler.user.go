@@ -23,7 +23,7 @@ var validate = validator.New()
 
 func (h *UserHandler) Register(ctx *gin.Context) {
 	var body RegisterUserDTOInput
-	if err := ctx.ShouldBindJSON(body); err != nil {
+	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Formato JSON invalido!"})
 		return
 	}
@@ -40,6 +40,12 @@ func (h *UserHandler) Register(ctx *gin.Context) {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Email ja esta registrado! Faça o login."})
 			return
 		}
+
+		if err == apperror.ErrPasswordNotMatch {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "As senhas devem ser iguais!"})
+			return
+		}
+
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -49,7 +55,7 @@ func (h *UserHandler) Register(ctx *gin.Context) {
 
 func (h *UserHandler) Login(ctx *gin.Context) {
 	var body LoginUserDTOInput
-	if err := ctx.ShouldBindJSON(body); err != nil {
+	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Formato JSON invalido!"})
 		return
 	}
@@ -62,7 +68,7 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 	token, err := h.userUseCase.Login(body)
 	if err != nil {
 		if err == apperror.ErrInvalidCredentials {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Email ou senha invalido!"})
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Email ou senha invalido!"})
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -73,9 +79,9 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 
 }
 
-func (h *UserHandler) Viewprofile(ctx *gin.Context) {
-	userID := ctx.GetInt("userID")
-	result, err := h.userUseCase.Viewprofile(userID)
+func (h *UserHandler) ViewProfile(ctx *gin.Context) {
+	userID := ctx.GetString("userID")
+	result, err := h.userUseCase.ViewProfile(userID)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": err.Error()})
 		return

@@ -44,14 +44,14 @@ func main() {
 	router := gin.Default()
 
 	router.POST("/user/register", userController.Register)
-	router.POST("user/login", userController.Login)
+	router.POST("/user/login", userController.Login)
 
 	// Grupo para rotas protegidas
 	authGroup := router.Group("/api")
 	authGroup.Use(middleware.AuthMiddleware(jwtService))
 
 	// Adicionando as rotas protegidas
-	authGroup.GET("/user/profile")
+	authGroup.GET("/user/profile", userController.ViewProfile)
 
 	log.Println("🚀 Servidor rodando na porta", cfg.ServerPort)
 	if err := router.Run(":" + cfg.ServerPort); err != nil {

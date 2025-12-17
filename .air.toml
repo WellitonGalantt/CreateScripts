@@ -1,0 +1,34 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  # Ajusta o caminho do seu main.go
+  cmd = "go build -o ./tmp/main.exe ./cmd/server/main.go"
+  
+  # Binário gerado
+  bin = "tmp\\main.exe"
+  
+  # Arquivos a observar
+  include_ext = ["go"]
+  exclude_dir = ["tmp"]
+  
+  # Delay antes de reiniciar
+  delay = 1000
+  
+  # Para no erro
+  stop_on_error = true
+  
+  # Log de erros
+  log = "tmp/build-errors.log"
+
+[color]
+  build = "yellow"
+  main = "magenta"
+  runner = "green"
+  watcher = "cyan"
+
+[log]
+  time = false
+
+[misc]
+  clean_on_exit = true

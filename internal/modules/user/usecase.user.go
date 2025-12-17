@@ -11,7 +11,7 @@ import (
 type UserUseCase interface {
 	Register(input RegisterUserDTOInput) error
 	Login(input LoginUserDTOInput) (string, error)
-	Viewprofile(userid int) (ViewProfileDTOOutput, error)
+	ViewProfile(userid string) (ViewProfileDTOOutput, error)
 }
 
 type service struct {
@@ -27,6 +27,9 @@ func NewService(repo UserRepository, jwt *auth.Service) UserUseCase {
 }
 
 func (s *service) Register(input RegisterUserDTOInput) error {
+	if input.Password != input.ConfirmPassword {
+		return apperror.ErrPasswordNotMatch
+	}
 	name := strings.TrimSpace(input.Name)
 	email := strings.TrimSpace(input.Email)
 
@@ -40,15 +43,15 @@ func (s *service) Register(input RegisterUserDTOInput) error {
 		return apperror.ErrEmailAlreadyExist
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(input.Passord), 12)
+	hash, err := bcrypt.GenerateFromPassword([]byte(input.Password), 12)
 	if err != nil {
 		return err
 	}
 
 	user := &User{
-		Name:        name,
-		Email:       email,
-		PassordHash: string(hash),
+		Name:         name,
+		Email:        email,
+		PasswordHash: string(hash),
 	}
 
 	err = s.repo.Create(user)
@@ -73,8 +76,8 @@ func (s *service) Login(input LoginUserDTOInput) (string, error) {
 
 	//Verificando senha:
 	err = bcrypt.CompareHashAndPassword(
-		[]byte(existUser.PassordHash),
-		[]byte(input.Passord),
+		[]byte(existUser.PasswordHash),
+		[]byte(input.Password),
 	)
 
 	if err != nil {
@@ -89,10 +92,10 @@ func (s *service) Login(input LoginUserDTOInput) (string, error) {
 	return token, nil
 }
 
-func (s *service) Viewprofile(userID int) (ViewProfileDTOOutput, error) {
+func (s *service) ViewProfile(userID string) (ViewProfileDTOOutput, error) {
 	user, err := s.repo.GetById(userID)
 	if err != nil {
-		return ViewProfileDTOOutput{}, nil
+		return ViewProfileDTOOutput{}, err
 	}
 
 	viewUser := ViewProfileDTOOutput{

@@ -7,5 +7,5 @@ import "time"
 type Userpoints struct {
 	UserID    int       `json:"user_id"`
 	Points    int       `json:"points"`
-	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

@@ -18,7 +18,7 @@ func NewService(secret string) *Service {
 	return &Service{secret: []byte(secret)}
 }
 
-func (s *Service) GenerateToken(userID int, role string) (string, error) {
+func (s *Service) GenerateToken(userID string, role string) (string, error) {
 	// Definindo os dados/estrutura do token
 	claims := jwt.MapClaims{
 		"sub":  userID,
