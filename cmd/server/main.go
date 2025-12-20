@@ -7,7 +7,9 @@ import (
 	"scriptmake/internal/auth"
 	"scriptmake/internal/db"
 	"scriptmake/internal/middleware"
+	"scriptmake/internal/modules/ai"
 	"scriptmake/internal/modules/user"
+	"scriptmake/internal/modules/userpoints"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +20,8 @@ func main() {
 
 	// Carregando as configuracoes da variaveis de ambiente
 	cfg := config.Load()
+
+	openRoterApiKey := cfg.OpenRouterApiKey
 
 	// Mando as variaveis carregada para criar a conexao com o banco
 	dbConn, err := db.NewPostgresDB(cfg)
@@ -38,6 +42,16 @@ func main() {
 	userUseCase := user.NewService(userRepository, jwtService)
 	userController := user.NewUserHandler(userUseCase)
 
+	//User Points
+	userPointsRepository := userpoints.NewPostgresRepository(dbConn)
+	userPointsUseCase := userpoints.NewService(userPointsRepository, jwtService, userRepository)
+	userPointsController := userpoints.NewUserPointsHandler(userPointsUseCase)
+
+	// Ia
+	aiCliente := ai.NewClient(openRoterApiKey)
+	aiService := ai.NewChatService(aiCliente)
+	aiHandler := ai.NewAiHandler(aiService)
+
 	// Parte de rotas, configurar as rotas
 
 	//Gin
@@ -46,12 +60,20 @@ func main() {
 	router.POST("/user/register", userController.Register)
 	router.POST("/user/login", userController.Login)
 
+	router.POST("/teste", aiHandler.TesteComunication)
+
 	// Grupo para rotas protegidas
 	authGroup := router.Group("/api")
 	authGroup.Use(middleware.AuthMiddleware(jwtService))
 
 	// Adicionando as rotas protegidas
 	authGroup.GET("/user/profile", userController.ViewProfile)
+
+	authGroup.GET("/userpoints/get", userPointsController.GetById)
+	authGroup.POST("/userpoints/debit", userPointsController.Debit)
+	authGroup.POST("/userpoints/credit", userPointsController.Credt)
+	authGroup.GET("/userpoints/balance", userPointsController.GetBalance)
+	authGroup.GET("/userpoints/transactions", userPointsController.GetTransactions)
 
 	log.Println("🚀 Servidor rodando na porta", cfg.ServerPort)
 	if err := router.Run(":" + cfg.ServerPort); err != nil {

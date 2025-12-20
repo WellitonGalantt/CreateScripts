@@ -9,4 +9,5 @@ var (
 	ErrInvalidInputValues = errors.New("formato email invalido")
 	ErrPasswordNotMatch   = errors.New("as senhas nao conferem")
 	ErrInsufficientPoints = errors.New("quantidade de pontos insuficientes")
+	ErrUserDoesNotExist   = errors.New("usuario informado nao existe")
 )

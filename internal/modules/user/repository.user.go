@@ -57,6 +57,9 @@ func (r *postgresRepository) GetById(userID string) (*User, error) {
 
 	err := r.db.QueryRow(query, userID).Scan(&u.ID, &u.Name, &u.Email, &u.Role, &u.PasswordHash)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 

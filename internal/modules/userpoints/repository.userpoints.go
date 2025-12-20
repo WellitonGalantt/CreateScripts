@@ -2,6 +2,7 @@ package userpoints
 
 import (
 	"database/sql"
+	"errors"
 	"scriptmake/internal/apperror"
 	"scriptmake/internal/modules/pointstransactions"
 )
@@ -25,7 +26,7 @@ func NewPostgresRepository(db *sql.DB) UserPointsRepository {
 }
 
 func (r *postgresRepository) GetById(userId string) (*Userpoints, error) {
-	query := `SELECT * FROM user_points WHERE user_id = $1`
+	query := `SELECT user_id, points, updated_at FROM user_points WHERE user_id = $1`
 
 	var userPoints Userpoints
 	err := r.db.QueryRow(query, userId).Scan(&userPoints.UserID, &userPoints.Points, &userPoints.UpdatedAt)
@@ -82,7 +83,7 @@ func (r *postgresRepository) Debit(quantity int, userId string, reason Transacti
 
 	var currentPoints int
 	checkQuery := `SELECT points FROM user_points WHERE user_id = $1`
-	err = r.db.QueryRow(checkQuery, userId).Scan(currentPoints)
+	err = tx.QueryRow(checkQuery, userId).Scan(&currentPoints)
 	if err != nil {
 		return err
 	}
@@ -96,7 +97,7 @@ func (r *postgresRepository) Debit(quantity int, userId string, reason Transacti
 	SET points = points - $1, updated_at = NOW()
 	WHERE user_id = $2
 	`
-	_, err = tx.Exec(debitQuery)
+	_, err = tx.Exec(debitQuery, quantity, userId)
 	if err != nil {
 		return err
 	}
@@ -105,7 +106,7 @@ func (r *postgresRepository) Debit(quantity int, userId string, reason Transacti
 	INSERT INTO points_transactions (user_id, type, amount, reason)
 	VALUES ($1, $2, $3, $4)`
 
-	_, err = tx.Exec(transactionQuery, userId, Credit, quantity, reason)
+	_, err = tx.Exec(transactionQuery, userId, Debit, quantity, reason)
 	if err != nil {
 		return err
 	}
@@ -117,8 +118,12 @@ func (r *postgresRepository) GetBalance(userId string) (int, error) {
 	query := `SELECT COALESCE(points, 0) FROM user_points WHERE user_id = $1`
 
 	var points int
-	err := r.db.QueryRow(query, userId).Scan(points)
+	err := r.db.QueryRow(query, userId).Scan(&points)
 	if err != nil {
+		//Se nao encontrar o registro é poruqe o usuario nao possui pontos ainda, nao é um erro exatamente
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
 		return 0, err
 	}
 
@@ -133,6 +138,8 @@ func (r *postgresRepository) GetTransactions(userId string) ([]pointstransaction
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 
 	var transactions []pointstransactions.PointsTransactions
 	for rows.Next() {
